@@ -71,28 +71,103 @@ The backend is intended to use service boundaries so that each domain can be dev
 
 ## Project Structure
 
-A possible structure for a service-oriented implementation is shown below. It is illustrative, not a verified listing of the current repository.
+The repository currently keeps the application inside `1.cotexAI/`, with separate frontend and backend directories. The frontend uses React, Vite, Redux Toolkit, reusable UI components, and feature-level API helpers. The backend is organized around an API gateway and domain services.
 
 ```text
 Cotex-AI/
-├── client/                  # React + Vite frontend
-│   └── src/
-│       ├── components/
-│       ├── pages/
-│       ├── features/        # Redux Toolkit slices
-│       └── services/        # API and socket clients
-├── server/
-│   ├── api-gateway/
-│   ├── auth-service/
-│   ├── project-service/
-│   ├── file-service/
-│   ├── ai-service/
-│   ├── terminal-service/
-│   └── payment-service/
-├── docker-compose.yml
-├── .env.example
-└── README.md
+├── .gitignore
+├── README.md
+└── 1.cotexAI/
+    ├── frontend/
+    │   ├── public/
+    │   ├── components/
+    │   │   ├── Artifact.jsx
+    │   │   ├── BillingDawer.jsx
+    │   │   ├── ChatArea.jsx
+    │   │   ├── ChatInput.jsx
+    │   │   ├── LoadingAnimation.jsx
+    │   │   ├── MessageBubble.jsx
+    │   │   ├── MessageList.jsx
+    │   │   ├── Navbar.jsx
+    │   │   └── Sidebar.jsx
+    │   ├── src/
+    │   │   ├── assets/
+    │   │   ├── features/
+    │   │   │   ├── getCurrentUser.js
+    │   │   │   ├── getMessages.js
+    │   │   │   ├── logOut.js
+    │   │   │   ├── sendMessage.js
+    │   │   │   ├── updateConversations.js
+    │   │   │   └── verifyPayment.js
+    │   │   ├── pages/
+    │   │   │   └── Home.jsx
+    │   │   ├── redux/
+    │   │   │   ├── conversationsSlice.js
+    │   │   │   ├── messageSlice.js
+    │   │   │   ├── store.js
+    │   │   │   └── userSlice.js
+    │   │   ├── App.jsx
+    │   │   ├── index.css
+    │   │   └── main.jsx
+    │   ├── utils/
+    │   │   ├── axios.js
+    │   │   └── firebase.js
+    │   ├── index.html
+    │   ├── package.json
+    │   └── vite.config.js
+    └── backend/
+        ├── gateway/
+        │   ├── controllers/
+        │   ├── middleware/
+        │   ├── shared/
+        │   ├── utils/
+        │   ├── Dockerfile
+        │   ├── index.js
+        │   └── package.json
+        ├── services/
+        │   ├── agent/
+        │   │   ├── agents/
+        │   │   ├── config/
+        │   │   ├── graph/
+        │   │   ├── shared/
+        │   │   ├── utils/
+        │   │   ├── index.js
+        │   │   └── package.json
+        │   ├── auth/
+        │   │   ├── config/
+        │   │   ├── controllers/
+        │   │   ├── middlewares/
+        │   │   ├── models/
+        │   │   ├── routes/
+        │   │   ├── shared/
+        │   │   ├── index.js
+        │   │   └── package.json
+        │   ├── billing/
+        │   │   ├── config/
+        │   │   ├── controllers/
+        │   │   ├── models/
+        │   │   ├── index.js
+        │   │   └── package.json
+        │   └── chat/
+        │       ├── index.js
+        │       └── package.json
+        ├── docker-compose.yml
+        └── package.json
 ```
+
+**Directory responsibilities**
+
+- `frontend/components/`: shared chat, navigation, artifact, loading, and billing UI components.
+- `frontend/src/features/`: client-side operations for user retrieval, messaging, conversation updates, logout, and payment verification.
+- `frontend/src/redux/`: Redux Toolkit store and user, conversation, and message state slices.
+- `frontend/utils/`: shared Axios and Firebase configuration.
+- `backend/gateway/`: API gateway entry point and supporting controllers, middleware, shared code, and utilities.
+- `backend/services/agent/`: AI agent setup, graph workflows, configuration, and related helpers.
+- `backend/services/auth/`: authentication service with controllers, routes, middleware, models, and configuration.
+- `backend/services/billing/`: billing service with controllers, models, and configuration.
+- `backend/services/chat/`: chat service entry point and service-specific dependencies.
+
+The tree reflects the directories and files currently visible in the repository. Some folders may be empty or still under development; the listing intentionally does not invent files that are not present.
 
 ## Getting Started
 
