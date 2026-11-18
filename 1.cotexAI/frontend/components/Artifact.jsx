@@ -1,0 +1,297 @@
+import { Check, Code2, Copy, Download, Eye, FileText, PanelRightClose, PanelRightOpen, X } from "lucide-react"
+import { useState } from "react"
+import { useSelector } from "react-redux"
+import { AnimatePresence, easeInOut, motion } from "motion/react"
+import Editor from '@monaco-editor/react';
+
+const Artifact = () => {
+  const [collapsed, setCollapsed] = useState(false)
+  const { artifacts } = useSelector(state => state.message)
+  const [tab, setTab] = useState("code")
+  const [activeFile, setActiveFile] = useState(0)
+  const [copied, setCopied]=useState(false)
+  const [mobileOpen,setMobileOpen]=useState(false)
+  if (artifacts.length == 0) return;
+
+  const handleCopy= async()=>{
+     await navigator.clipboard.writeText(file?.content || "")
+    setCopied(true)
+    setTimeout(() => {
+      setCopied(false)
+    }, 2000)
+  }
+
+  const artifact = artifacts[0]
+  const isPdf = artifact?.type === "PDF"
+  const isPpt = artifact?.type === "PPT"
+  const file = artifact?.files?.[activeFile]
+  const pdfFile = isPdf ? artifact.files?.[0] : null
+  const pptFile = isPpt ? artifact.files?.[0] : null
+  const pdfUrl = pdfFile ? `data:application/pdf;base64,${pdfFile.content}` : ""
+  const pptUrl = pptFile
+    ? `data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,${pptFile.content}`
+    : ""
+  const htmlFile=artifact?.files?.find(f=>f.name==="index.html")
+  const cssFile=artifact?.files?.find(f=>f.name==="style.css")
+  const jsFile=artifact?.files?.find(f=>f.name==="script.js")
+  const canPerview=Boolean(htmlFile)
+  const previewDoc = `
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+      ${cssFile?.content|| ""}
+    </style>
+</head>
+<body>
+  ${htmlFile?.content || ""}
+    <script>
+        ${jsFile?.content || ""}
+    </script>
+</body>
+</html>`
+
+
+const detectLanguage=(fileName="")=>{
+  const name = fileName.toLowerCase()
+
+  if(name.endsWith(".html"))
+    return "html";
+
+  if(name.endsWith(".css"))
+    return "css";
+
+  if(name.endsWith(".js"))
+    return "javascript";
+
+  if(name.endsWith(".jsx"))
+    return "javascript";
+
+  if(name.endsWith(".ts"))
+    return "typescript";
+
+  if(name.endsWith(".tsx"))
+    return "typescript";
+
+  if(name.endsWith(".json"))
+    return "json";
+
+  if(name.endsWith(".py"))
+    return "python";
+
+  if(name.endsWith(".java"))
+    return "java";
+
+  if(name.endsWith(".cpp"))
+    return "cpp";
+
+  if(name.endsWith(".c"))
+    return "c";
+
+  return "plaintext"
+}
+
+const renderPanelContent=(onClose)=>{
+  return(
+    <>
+    {!collapsed ? <div className="flex flex-col h-full bg-[#0d0f14]">
+        <div className="h-14 px-4 border-b border-white/6 flex items-center gap-3 shrink-0">
+          <button type="button" aria-label={onClose ? "Close artifact panel" : "Collapse artifact panel"} className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-500
+              hover:text-slate-200 hover:bg-white/5 transition-colors duration-150 bg-transparent
+              border-none cursor-pointer shrink-0" onClick={onClose || (()=>setCollapsed(false))}>
+            {onClose?<X size={15}/>: <PanelRightClose size={16}/>} 
+          </button>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center justify-center w-6 h-6 rounded-md bg-indigo-500/10 border
+                  border-indigo-500/20 shrike-0">
+                {isPdf
+                  ? <FileText className="text-indigo-400" size={12} />
+                  : <Code2 className="text-indigo-400" size={12} />}
+              </div>
+              <div className="text-[13px] font-medium text-slate-200 truncate">{artifact?.title}</div>
+            </div>
+
+            {isPdf || isPpt ? (
+              (pdfFile || pptFile) && (
+                <a
+                  href={isPdf ? pdfUrl : pptUrl}
+                  download={isPdf ? pdfFile.name : pptFile.name}
+                  aria-label={isPdf ? "Download PDF" : "Download PowerPoint"}
+                  title={isPdf ? "Download PDF" : "Download PowerPoint"}
+                  className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-white/5"
+                >
+                  <Download size={15} />
+                </a>
+              )
+            ) : (
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  onClick={handleCopy}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium text-slate-400 hover:text-slate-200
+                      hover:bg-white/5 rounded-lg transition-colors duration-150 bg-transparent border-none cursor-pointer">
+                  {copied?<Check size={15} />:< Copy size={15} />}
+                </button>
+              </div>
+            )}
+          {canPerview && <div className="flex h-auto items-center gap-1 bg-white/4 border border-white/6 p-1 rounded-lg">
+            <button
+              onClick={() => setTab("code")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-mb transition-colors duration-150
+                  ${tab === "code" ? "bg-indigo-500 text-white" : "text-slate-500 hover:text-slate-200"}`}
+            >
+              <Code2 size={11} /> Code
+            </button>
+            <button
+              onClick={() => setTab("preview")}
+              className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium rounded-mb transition-colors duration-150
+                  ${tab === "preview" ? "bg-indigo-500 text-white" : "text-slate-500 hover:text-slate-200"}`}
+            >
+              <Eye size={11} /> Preview
+            </button>
+          </div>}
+          
+        </div>
+        {!isPdf && !isPpt && tab==="code" && <div className="flex h-auto border-b border-white/6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden shrink-0">
+          {
+            artifacts[0]?.files?.map((f, index) => (
+              <button
+                onClick={() => setActiveFile(index)}
+                className={`px-4 py-2.5 text-[11px] font-medium whitespace-nowrap transition-colors duration-150 border-r border-white/5
+                        relative cursor-pointer bg-transparent ${activeFile === index ? "text-indigo-400" : "text-slate-500 hover:text-slate-300"}`}>
+                {f?.name}
+                {activeFile === index && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500 rounded-t-full" />}
+
+              </button>
+            ))
+          }
+
+        </div>}
+        
+
+        <div className="flex-1 overflow-hidden">
+          {isPdf ? (
+            pdfFile ? (
+              <iframe
+                title={`PDF preview: ${pdfFile.name}`}
+                src={pdfUrl}
+                className="h-full w-full bg-white"
+              />
+            ) : (
+              <p role="alert" className="p-4 text-sm text-red-300">PDF artifact has no file to preview.</p>
+            )
+          ) : isPpt ? (
+            pptFile ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-slate-300">
+                <FileText size={36} className="text-indigo-400" />
+                <p>{pptFile.name}</p>
+                <p className="text-sm text-slate-500">PowerPoint presentation is ready to download.</p>
+                <a
+                  href={pptUrl}
+                  download={pptFile.name}
+                  className="inline-flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-400"
+                >
+                  <Download size={16} />
+                  Download PowerPoint
+                </a>
+              </div>
+            ) : (
+              <p role="alert" className="p-4 text-sm text-red-300">PowerPoint artifact has no file to download.</p>
+            )
+          ) : (tab=="preview" && canPerview) ? <motion.div
+          initial={{opacity:0}}
+          animate={{opacity:1}}
+          transition={{duration:0.5}}
+          className="w-full h-full"
+          >
+          <iframe title='preview' srcDoc={previewDoc} sandbox="allow-scripts" className="w-full h-full bg-indigo-400" />
+          </motion.div>
+
+          :
+          <motion.div
+          initial={{opacity:0}}
+          animate={{opacity:1}}
+          transition={{duration:0.5}}
+          className='w-full h-full'
+          >
+           <Editor
+           theme='vs-dark'
+           language={detectLanguage(file?.name)}
+           value={file?.content}
+           options={{readOnly:true, minimap:{enable: false}, fontsize: 13, wordWrap:"on", automaticLayout: true,
+           scrollBeyondLastLine:false,padding:{top: 16}, lineNumber:"on", readLineHighhight: "none"}}
+           />
+          </motion.div>
+        }
+        </div>
+      </div> :
+        <div className='hidden lg:flex h-full border border-white/6 bg-[#0d0f14] flex-col items-center py-4 gap-3 shrink-0'>
+          <button className="flex items-center justify-center w-7 h-7 rounded-lg text-slate-500
+              hover:text-slate-200 hover:bg-white/5 transition-colors duration-150 bg-transparent
+              border-none cursor-pointer shrink-0" onClick={() => setCollapsed(false)}>
+            <PanelRightOpen size={16} />
+          </button>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+
+            <div
+              className="text-[10px] font-medium text-slate-600 tracking-wideset uppercase whitespace-nowrap"
+              style={{
+                writingMode: "vertical-lr",
+                transform: "rotate(180deg)"
+
+              }}
+            >{artifacts[0]?.title}</div>
+          </div>
+        </div>}
+         </>
+
+  )
+}
+
+  return (
+    <>
+    <button
+    onClick={() => setMobileOpen(true)} 
+      className="lg:hidden fixed bottom-24 right-4 z-40 flex items-center gap-2 px-3.5
+      py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[12px] font-medium shadow-lg
+      shadow-indigo-500/20 border-none cursor-pointer transition-colors duration-150" >
+      <Code2 />
+      View Code
+    </button>
+<AnimatePresence>
+    {mobileOpen && <>
+    <motion.div 
+    
+    initial={{opacity:0}}
+    animate={{opacity:1}}
+    exit={{opacity:0}}
+    transition={{duration:0.2}}
+    onClick={() =>setMobileOpen(false)} className="lg:hidden fixed inset-0
+    z-40 bg-black/60 backdrop-blur-sm"/>
+    
+      <motion.div initial={{x: "100%"}} animate={{x:0}} exit={{x: "100%"}} transition={{duration: 0.25,ease: "easeInOut"}} className="lg:hidden fixed inset-y-0 right-0 z-50 w-[88vw] max-w-[420px]
+      border-1 border-white/6 overflow-hidden">
+        {renderPanelContent(()=>setMobileOpen(false))}
+      </motion.div>
+      </>}
+
+      </AnimatePresence>
+
+    <motion.div
+      initial={{ width: 250 }}
+      animate={{ width: collapsed ? 48 : 450 }}
+      transition={{
+        duration: 0.25,
+        ease: easeInOut
+      }}
+      className='hidden lg:flex h-full border border-white/6 flex-col
+    overflow-hidden shrink-0 w-62.5'>
+      
+    {renderPanelContent()}
+    </motion.div>
+    </>
+  )
+}
+
+export default Artifact
